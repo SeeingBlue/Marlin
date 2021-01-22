@@ -1169,11 +1169,8 @@ void Planner::recalculate() {
  * Maintain fans, paste extruder pressure,
  */
 void Planner::check_axes_activity() {
-  uint8_t axis_active[NUM_AXIS] = { 0 };
-
-  #if FAN_COUNT > 0
-    uint8_t tail_fan_speed[FAN_COUNT] = { 0 };
-  #endif
+  unsigned char axis_active[NUM_AXIS] = { 0 },
+                tail_fan_speed[FAN_COUNT];
 
   #if ENABLED(BARICUDA)
     #if HAS_HEATER_1
@@ -1783,7 +1780,13 @@ bool Planner::_populate_block(block_t * const block, bool split_move,
   // For a mixing extruder, get a magnified esteps for each
   #if ENABLED(MIXING_EXTRUDER)
     for (uint8_t i = 0; i < MIXING_STEPPERS; i++)
-      block->mix_steps[i] = mixing_factor[i] * esteps;
+      block->mix_steps[i] = mixing_factor[i] * (
+        #if ENABLED(LIN_ADVANCE)
+          esteps
+        #else
+          block->step_event_count
+        #endif
+      );
   #endif
 
   #if FAN_COUNT > 0
